@@ -51,41 +51,47 @@ const thoughtController = {
   },
   // update thought
   async updateThought(req, res) {
-    const dbThoughtData = await Thought.findOneAndUpdate({ _id: req.params.thoughtId }, { $set: req.body }, { runValidators: true, new: true });
-
-    if (!dbThoughtData) {
-      return res.status(404).json({ message: 'No thought with this id!' });
-    }
-
-    res.json(dbThoughtData);
-
-    console.log(err);
-    res.status(500).json(err);
-  },
-  // delete thought
-  async deleteThought(req, res) {
     try {
-      const dbThoughtData = await Thought.findOneAndRemove({ _id: req.params.thoughtId })
+      const dbThoughtData = await Thought.findOneAndUpdate(
+        { _id: req.params.thoughtId },
+        { $set: req.body },
+        { runValidators: true, new: true }
+      );
 
       if (!dbThoughtData) {
         return res.status(404).json({ message: 'No thought with this id!' });
       }
 
-      // remove thought id from user's `thoughts` field
-      const dbUserData = User.findOneAndUpdate(
+      res.json(dbThoughtData);
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: err.message });
+    }
+  },
+
+  // delete thought
+  async deleteThought(req, res) {
+    try {
+      const dbThoughtData = await Thought.findOneAndRemove({ _id: req.params.thoughtId });
+
+      if (!dbThoughtData) {
+        return res.status(404).json({ message: 'No thought with this id!' });
+      }
+
+      const dbUserData = await User.findOneAndUpdate(
         { thoughts: req.params.thoughtId },
         { $pull: { thoughts: req.params.thoughtId } },
         { new: true }
       );
 
       if (!dbUserData) {
-        return res.status(404).json({ message: 'Thought created but no user with this id!' });
+        return res.status(404).json({ message: 'Thought deleted but no user with this id!' });
       }
 
       res.json({ message: 'Thought successfully deleted!' });
     } catch (err) {
       console.log(err);
-      res.status(500).json(err);
+      res.status(500).json({ message: err.message });
     }
   },
 
